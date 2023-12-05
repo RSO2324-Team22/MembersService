@@ -1,6 +1,6 @@
 FROM mcr.microsoft.com/dotnet/sdk:7.0-alpine as build
 WORKDIR /source
-COPY *.csproj
+COPY *.csproj .
 RUN dotnet restore
 
 COPY . .
