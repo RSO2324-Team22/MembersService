@@ -1,3 +1,6 @@
+using MembersService.Members;
+using Microsoft.EntityFrameworkCore;
+
 namespace MembersService.Database;
 
 public class MembersDbContext : DbContext {
