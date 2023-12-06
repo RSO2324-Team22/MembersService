@@ -23,10 +23,10 @@ jobs:
         username: pusti
         password: ${{ secrets.DOCKER_TOKEN }}
     - name: Build the Docker image
-      run: docker buildx build -f Dockerfile --tag pusti/rso2324-team22-members-service:$TIMESTAMP .
+      run: docker buildx build -f Dockerfile --tag pusti/rso2324-team22-members-service:test .
     - name: Make the `latest` tag
       run: docker buildx build -f Dockerfile --tag pusti/rso2324-team22-members-service:latest .
     - name: Push Docker image
-      run: docker push pusti/rso2324-team22-members-service:$TIMESTAMP
+      run: docker push pusti/rso2324-team22-members-service:test
     - name: Push the `latest` tag
       run: docker push pusti/rso2324-team22-members-service:latest
