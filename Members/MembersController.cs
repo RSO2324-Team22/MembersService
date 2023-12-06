@@ -19,6 +19,7 @@ public class MembersController : ControllerBase
     }
 
     [HttpGet(Name = "GetMembers")]
+    [Route("all")]
     [Route("")]
     public async Task<IEnumerable<Member>> GetMembers()
     {
