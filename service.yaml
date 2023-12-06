@@ -41,11 +41,10 @@ kind: Service
 metadata:
   name: members-service
 spec:
-  type: NodePort
+  type: LoadBalancer
   selector:
     app: members-service
   ports:
     - protocol: TCP
       port: 80
       targetPort: http
-      nodePort: 30001
