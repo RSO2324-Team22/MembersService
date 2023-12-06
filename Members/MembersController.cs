@@ -34,4 +34,19 @@ public class MembersController : ControllerBase
             .Where(member => member.Roles.Contains(Role.Singer))
             .ToListAsync();
     }
+
+    [HttpPost(Name = "AddMember")]
+    public async Task<string> Add([FromBody] Member newMember)
+    {
+        try
+        {
+            this._dbContext.Members.Add(newMember);
+            await this._dbContext.SaveChangesAsync();
+            return "Član uspešno dodan.";
+        }
+        catch
+        {
+            return "Napaka pri dodajanju člana.";
+        }
+    }
 }
