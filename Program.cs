@@ -1,4 +1,6 @@
 using MembersService.Database;
+using MembersService.HealthCheck;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,6 +18,8 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<MembersDbContext>(options => {
     options.UseNpgsql($"Host={postgres_server};Username={postgres_username};Password={postgres_password};Database={postgres_database}");
 });
+builder.Services.AddHealthChecks()
+    .AddCheck<DatabaseCreationHealthCheck>("database_creation", tags: new [] { "startup" });
 
 var app = builder.Build();
 
@@ -27,6 +31,10 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.MapHealthChecks("/health/startup", new HealthCheckOptions {
+    Predicate = healthcheck => healthcheck.Tags.Contains("startup") 
+});
 
 app.UseAuthorization();
 
