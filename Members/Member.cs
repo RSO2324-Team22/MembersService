@@ -8,6 +8,5 @@ public class Member {
     public required Section Section { get; set; }
     public string? PhoneNumber { get; set; }
     public string? Email { get; set; }
-    [NotMapped]
     public IEnumerable<Role> Roles { get; init; } = new List<Role>();
 }
