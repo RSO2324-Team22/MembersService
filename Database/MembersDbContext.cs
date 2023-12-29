@@ -2,6 +2,7 @@ using MembersService.Members;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using System.Text.Json;
 
 namespace MembersService.Database;
 
@@ -26,13 +27,13 @@ public class MembersDbContext : DbContext {
 }
 
 class EnumCollectionJsonValueConverter<T> : ValueConverter<IEnumerable<T>, string> 
-where T : Enum
+where T : struct, Enum
 {
     public EnumCollectionJsonValueConverter() : base(
-        v => JsonConvert
-            .SerializeObject(v.Select(e => e.ToString()).ToList()),
-        v => JsonConvert
-            .DeserializeObject<IEnumerable<string>>(v)
+        v => JsonSerializer
+            .Serialize(v.Select(e => e.ToString()).ToList(), (JsonSerializerOptions) null),
+        v => JsonSerializer
+            .Deserialize<IEnumerable<string>>(v, (JsonSerializerOptions) null)
             .Select(e => Enum.Parse<T>(e)).ToHashSet()) {}
 }
 
