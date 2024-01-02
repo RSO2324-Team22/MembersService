@@ -22,21 +22,19 @@ public class MembersController : ControllerBase
     }
 
     [HttpGet(Name = "GetMembers")]
-    [Route("all")]
-    [Route("")]
-    public async Task<IEnumerable<Member>> GetMembers()
+    public async Task<IEnumerable<Member>> Index()
     {
         return await this._dbContext.Members.ToListAsync();
     }
 
-    [HttpGet(Name = "GetSingers")]
-    [Route("singers")]
-    public async Task<IEnumerable<Member>> GetSingers()
-    {
-        return await this._dbContext.Members
-            .Where(member => member.Roles.Contains(Role.Singer))
-            .ToListAsync();
-    }
+    // [HttpGet(Name = "GetRole")]
+    // [Route("[action]")]
+    // public async Task<IEnumerable<Member>> Singers()
+    // {
+    //     return await this._dbContext.Members
+    //         .Where(member => member.Roles.Contains(Role.Singer))
+    //         .ToListAsync();
+    // }
 
     [HttpPost(Name = "AddMember")]
     public async Task<string> Add([FromBody] Member newMember)
