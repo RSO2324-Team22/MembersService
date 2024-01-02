@@ -1,7 +1,9 @@
 using MembersService.Database;
 using MembersService.HealthCheck;
+using MembersService.Metrics;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
+using OpenTelemetry.Metrics;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,6 +23,18 @@ builder.Services.AddDbContext<MembersDbContext>(options => {
 builder.Services.AddHealthChecks()
     .AddCheck<DatabaseCreationHealthCheck>("database_creation", tags: new [] { "startup" });
 
+builder.Services.AddSingleton<MembersMetrics>();
+
+builder.Services.AddOpenTelemetry()
+    .WithMetrics(builder =>
+    {
+        builder.AddPrometheusExporter();
+
+        builder.AddMeter("Microsoft.AspNetCore.Hosting",
+            "Microsoft.AspNetCore.Server.Kestrel",
+            "Members.Web");
+    });
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -35,6 +49,8 @@ app.UseHttpsRedirection();
 app.MapHealthChecks("/health/startup", new HealthCheckOptions {
     Predicate = healthcheck => healthcheck.Tags.Contains("startup") 
 });
+
+app.MapPrometheusScrapingEndpoint();
 
 app.UseAuthorization();
 

@@ -1,4 +1,5 @@
 using MembersService.Database;
+using MembersService.Metrics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,12 +11,14 @@ public class MembersController : ControllerBase
 {
     private readonly ILogger<MembersController> _logger;
     private readonly MembersDbContext _dbContext;
-
+    private readonly MembersMetrics _metrics;
     public MembersController(
             ILogger<MembersController> logger,
-            MembersDbContext dbContext) {
+            MembersDbContext dbContext,
+            MembersMetrics metrics) {
         this._logger = logger;
         this._dbContext = dbContext;
+        this._metrics = metrics;
     }
 
     [HttpGet(Name = "GetMembers")]
@@ -42,6 +45,7 @@ public class MembersController : ControllerBase
         {
             this._dbContext.Members.Add(newMember);
             await this._dbContext.SaveChangesAsync();
+            this._metrics.MemberAdded(newMember.Name);
             return "Član uspešno dodan.";
         }
         catch
