@@ -17,9 +17,11 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
 builder.Services.AddDbContext<MembersDbContext>(options => {
     options.UseNpgsql($"Host={postgres_server};Username={postgres_username};Password={postgres_password};Database={postgres_database}");
 });
+
 builder.Services.AddHealthChecks()
     .AddCheck<DatabaseCreationHealthCheck>("database_creation", tags: new [] { "startup" });
 
@@ -38,11 +40,12 @@ builder.Services.AddOpenTelemetry()
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseSwagger();
+app.UseSwaggerUI(options => {
+    options.SwaggerEndpoint("/swagger/v1/swagger.json", "v1");
+    options.RoutePrefix = "openapi";
+    options.DocumentTitle = "OpenAPI documentation";
+});
 
 app.UseHttpsRedirection();
 
