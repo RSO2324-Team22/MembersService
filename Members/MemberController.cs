@@ -3,6 +3,7 @@ using MembersService.Database;
 using MembersService.Metrics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace MembersService.Members;
 
@@ -26,23 +27,26 @@ public class MemberController : ControllerBase
         this._kafkaProducer = kafkaProducer;
     }
 
-    [HttpGet(Name = "GetMembers")]
+    [HttpGet]
+    [SwaggerOperation("GetMembers")]
     public async Task<IEnumerable<Member>> Index()
     {
         return await this._dbContext.Members.ToListAsync();
     }
 
-    // [HttpGet(Name = "GetRole")]
-    // [Route("[action]")]
-    // public async Task<IEnumerable<Member>> Singers()
-    // {
-    //     return await this._dbContext.Members
-    //         .Where(member => member.Roles.Contains(Role.Singer))
-    //         .ToListAsync();
-    // }
+    [HttpGet]
+    [Route("singers")]
+    [SwaggerOperation("GetSingerMembers")]
+    public async Task<IEnumerable<Member>> Singers()
+    {
+        return await this._dbContext.Members
+            .Where(member => member.Roles.Contains(Role.Singer))
+            .ToListAsync();
+    }
 
-    [HttpGet(Name = "GetCouncil")]
+    [HttpGet]
     [Route("council")]
+    [SwaggerOperation("GetCouncilMembers")]
     public async Task<IEnumerable<Member>> GetCouncil()
     {
         return await this._dbContext.Members
@@ -51,7 +55,7 @@ public class MemberController : ControllerBase
     }
 
     [HttpPost(Name = "AddMember")]
-    [Route("")]
+    [SwaggerOperation("AddMember")]
     public async Task<Member> Add([FromBody] CreateMemberModel model)
     {
         Member member = new Member() {
@@ -72,8 +76,9 @@ public class MemberController : ControllerBase
         return member;
     }
 
-    [HttpPut(Name = "EditMember")]
+    [HttpPut]
     [Route("{id}")]
+    [SwaggerOperation("EditMember")]
     public async Task<Member> Edit(int id, [FromBody] CreateMemberModel model) {
         Member member = await this._dbContext.Members
             .Where(m => m.Id == id)
@@ -94,8 +99,9 @@ public class MemberController : ControllerBase
         return member;
     }
 
-    [HttpDelete(Name = "DeleteMember")]
+    [HttpDelete]
     [Route("{id}")]
+    [SwaggerOperation("DeleteMember")]
     public async Task<Member> Delete(int id) {
         Member member = await this._dbContext.Members
             .Where(m => m.Id == id)
