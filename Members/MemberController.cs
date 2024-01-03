@@ -8,15 +8,15 @@ namespace MembersService.Members;
 
 [ApiController]
 [Route("[controller]")]
-public class MembersController : ControllerBase
+public class MemberController : ControllerBase
 {
-    private readonly ILogger<MembersController> _logger;
+    private readonly ILogger<MemberController> _logger;
     private readonly MembersDbContext _dbContext;
     private readonly MembersMetrics _metrics;
     private readonly IProducer<string, int> _kafkaProducer;
 
-    public MembersController(
-            ILogger<MembersController> logger,
+    public MemberController(
+            ILogger<MemberController> logger,
             MembersDbContext dbContext,
             MembersMetrics metrics,
             IProducer<string, int> kafkaProducer) {
