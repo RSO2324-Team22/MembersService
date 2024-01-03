@@ -73,7 +73,7 @@ public class MembersController : ControllerBase
     }
 
     [HttpPut(Name = "EditMember")]
-    [Route("[id]")]
+    [Route("{id}")]
     public async Task<Member> Edit(int id, [FromBody] CreateMemberModel model) {
         Member member = await this._dbContext.Members
             .Where(m => m.Id == id)
@@ -95,7 +95,7 @@ public class MembersController : ControllerBase
     }
 
     [HttpDelete(Name = "DeleteMember")]
-    [Route("[id]")]
+    [Route("{id}")]
     public async Task<Member> Delete(int id) {
         Member member = await this._dbContext.Members
             .Where(m => m.Id == id)
