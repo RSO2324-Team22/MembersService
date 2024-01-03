@@ -66,37 +66,62 @@ public class MemberController : ControllerBase
             Roles = model.Roles.Select(r => Enum.Parse<Role>(r)).ToList()
         };
 
-        this._dbContext.Members.Add(member);
-        await this._dbContext.SaveChangesAsync();
-        Message<string, int> addMemberMessage = new Message<string, int>() {
-            Key = "add_member",
-            Value = member.Id
-        };
-        await this._kafkaProducer.ProduceAsync("members", addMemberMessage);
-        return member;
+        try
+        {
+            this._dbContext.Members.Add(member);
+            await this._dbContext.SaveChangesAsync();
+            Message<string, int> addMemberMessage = new Message<string, int>() {
+                Key = "add_member",
+                Value = member.Id
+            };
+            await this._kafkaProducer.ProduceAsync("members", addMemberMessage);
+            return member;
+        }
+        catch (Exception e)
+        {
+            this._logger.LogError("There was a problem adding new user");
+            return member;
+        }
     }
 
     [HttpPut]
     [Route("{id}")]
     [SwaggerOperation("EditMember")]
-    public async Task<Member> Edit(int id, [FromBody] CreateMemberModel model) {
-        Member member = await this._dbContext.Members
+    public async Task<IResult> Edit(int id, [FromBody] CreateMemberModel model)
+    {
+        Member? member = await this._dbContext.Members
             .Where(m => m.Id == id)
-            .SingleAsync();
-        
+            .SingleOrDefaultAsync();
+
+        if (member == null)
+        {
+            this._logger.LogInformation("Member with given id: {id} does not exist");
+            return Results.BadRequest();
+        }
+
         member.Name = model.Name;
         member.Section = Enum.Parse<Section>(model.Section);
         member.PhoneNumber = model.PhoneNumber;
         member.Email = model.Email;
         member.Roles = model.Roles.Select(r => Enum.Parse<Role>(r)).ToList();
 
-        await this._dbContext.SaveChangesAsync();
-        Message<string, int> editMemberMessage = new Message<string, int>() {
-            Key = "edit_member",
-            Value = member.Id
-        };
-        await this._kafkaProducer.ProduceAsync("members", editMemberMessage);
-        return member;
+        try {
+            await this._dbContext.SaveChangesAsync();
+            
+            this._logger.LogInformation(221, "Edited user {id}", id);
+            
+            Message<string, int> editMemberMessage = new Message<string, int>() {
+                Key = "edit_member",
+                Value = member.Id
+            };
+            await this._kafkaProducer.ProduceAsync("members", editMemberMessage);
+            return Results.Created(nameof(Index), member);
+        }
+        catch (Exception e)
+        {
+            this._logger.LogError(e, "There was an error editing user {id}", id);
+            return Results.BadRequest();
+        }
     }
 
     [HttpDelete]
