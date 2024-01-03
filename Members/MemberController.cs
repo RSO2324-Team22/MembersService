@@ -37,26 +37,42 @@ public class MemberController : ControllerBase
     [HttpGet]
     [Route("singers")]
     [SwaggerOperation("GetSingerMembers")]
-    public async Task<IEnumerable<Member>> Singers()
+    public async Task<ActionResult<IEnumerable<Member>>> Singers()
     {
-        return await this._dbContext.Members
-            .Where(member => member.Roles.Contains(Role.Singer))
-            .ToListAsync();
+        try
+        {
+            var members = await Index();
+            return Ok(members.Where(member => member.Roles.Contains(Role.Singer)));
+        }
+        catch (Exception e)
+        {
+            var errMsg = "There was a problem fetching singers";
+            this._logger.LogError(e, errMsg);
+            return BadRequest(errMsg);
+        }
     }
 
     [HttpGet]
     [Route("council")]
     [SwaggerOperation("GetCouncilMembers")]
-    public async Task<IEnumerable<Member>> GetCouncil()
+    public async Task<ActionResult<IEnumerable<Member>>> GetCouncil()
     {
-        return await this._dbContext.Members
-            .Where(member => member.Roles.Contains(Role.Council))
-            .ToListAsync();
+        try
+        {
+            var members = await Index();
+            return Ok(members.Where(member => member.Roles.Contains(Role.Council)));
+        }
+        catch (Exception e)
+        {
+            const string errMsg = "There was a problem fetching council members";
+            this._logger.LogError(e, errMsg);
+            return BadRequest(errMsg);
+        }
     }
 
-    [HttpPost(Name = "AddMember")]
+    [HttpPost]
     [SwaggerOperation("AddMember")]
-    public async Task<Member> Add([FromBody] CreateMemberModel model)
+    public async Task<IResult> Add([FromBody] CreateMemberModel model)
     {
         Member member = new Member() {
             Name = model.Name,
@@ -75,12 +91,13 @@ public class MemberController : ControllerBase
                 Value = member.Id
             };
             await this._kafkaProducer.ProduceAsync("members", addMemberMessage);
-            return member;
+            return Results.Created(nameof(Index), member);
         }
         catch (Exception e)
         {
-            this._logger.LogError("There was a problem adding new user");
-            return member;
+            const string errMsg = "There was a problem adding new user";
+            this._logger.LogError(e, errMsg);
+            return Results.BadRequest(errMsg);
         }
     }
 
@@ -95,7 +112,7 @@ public class MemberController : ControllerBase
 
         if (member == null)
         {
-            this._logger.LogInformation("Member with given id: {id} does not exist");
+            this._logger.LogInformation("Member with id: {id} does not exist");
             return Results.BadRequest();
         }
 
@@ -119,26 +136,41 @@ public class MemberController : ControllerBase
         }
         catch (Exception e)
         {
-            this._logger.LogError(e, "There was an error editing user {id}", id);
-            return Results.BadRequest();
+            this._logger.LogError(e, "There was an error editing user with id: {id}", id);
+            return Results.BadRequest($"There was an error editing user with id: {id}");
         }
     }
 
     [HttpDelete]
     [Route("{id}")]
     [SwaggerOperation("DeleteMember")]
-    public async Task<Member> Delete(int id) {
+    public async Task<IResult> Delete(int id) {
         Member member = await this._dbContext.Members
             .Where(m => m.Id == id)
             .SingleAsync();
-        
-        this._dbContext.Remove(member);
-        await this._dbContext.SaveChangesAsync();
-        Message<string, int> deleteMemberMessage = new Message<string, int>() {
-            Key = "delete_member",
-            Value = member.Id
-        };
-        await this._kafkaProducer.ProduceAsync("members", deleteMemberMessage);
-        return member;
+
+        if (member == null)
+        {
+            this._logger.LogInformation("Member with given id: {id} does not exist");
+            return Results.BadRequest();
+        }
+
+        try
+        {
+            this._dbContext.Remove(member);
+            await this._dbContext.SaveChangesAsync();
+            Message<string, int> deleteMemberMessage = new Message<string, int>()
+            {
+                Key = "delete_member",
+                Value = member.Id
+            };
+            await this._kafkaProducer.ProduceAsync("members", deleteMemberMessage);
+            return Results.Ok(member);
+        }
+        catch(Exception e)
+        {
+            this._logger.LogError(e, "There was an error deleting user {id}", id);
+            return Results.BadRequest($"There was an error deleting user {id}");
+        }
     }
 }
