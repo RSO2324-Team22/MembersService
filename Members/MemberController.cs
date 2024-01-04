@@ -76,10 +76,10 @@ public class MemberController : ControllerBase
     {
         Member member = new Member() {
             Name = model.Name,
-            Section = Enum.Parse<Section>(model.Section),
+            Section = model.Section,
             PhoneNumber = model.PhoneNumber,
             Email = model.Email,
-            Roles = model.Roles.Select(r => Enum.Parse<Role>(r)).ToList()
+            Roles = model.Roles
         };
 
         try
@@ -117,10 +117,10 @@ public class MemberController : ControllerBase
         }
 
         member.Name = model.Name;
-        member.Section = Enum.Parse<Section>(model.Section);
+        member.Section = model.Section;
         member.PhoneNumber = model.PhoneNumber;
         member.Email = model.Email;
-        member.Roles = model.Roles.Select(r => Enum.Parse<Role>(r)).ToList();
+        member.Roles = model.Roles;
 
         try {
             await this._dbContext.SaveChangesAsync();
