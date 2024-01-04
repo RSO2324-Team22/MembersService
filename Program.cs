@@ -12,6 +12,7 @@ using Serilog.Events;
 var configuration = new ConfigurationBuilder()
     .SetBasePath(Directory.GetCurrentDirectory())
     .AddJsonFile("appsettings.json")
+    .AddEnvironmentVariables()
     .Build();
 
 Log.Logger = new LoggerConfiguration()
@@ -28,7 +29,12 @@ string postgres_password = builder.Configuration["POSTGRES_PASSWORD"] ?? "";
 // Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddGraphQL();
-builder.Services.AddKafkaClient();
+builder.Services.AddKafkaClient()
+    .Configure(options => {
+        options.Configure(new ProducerConfig {
+            BootstrapServers = configuration["KAFKA_URL"]
+        }); 
+});
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
