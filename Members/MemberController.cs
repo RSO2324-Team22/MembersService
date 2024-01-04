@@ -70,6 +70,28 @@ public class MemberController : ControllerBase
         }
     }
 
+    [HttpGet]
+    [Route("{id}")]
+    [SwaggerOperation("GetMemberById")]
+    public async Task<ActionResult<Member>> GetMemberById(int id)
+    {
+        try
+        {   
+            Member? member = await this._dbContext.Members
+                .Where(m => m.Id == id)
+                .SingleOrDefaultAsync();
+            this._logger.LogInformation("Returned member with id: {id}", id);
+            return Ok(member);
+        }
+        catch (Exception e)
+        {
+            const string errMsg = "There was a problem fetching council members";
+            this._logger.LogError(e, errMsg);
+            return BadRequest(errMsg);
+        }
+    }
+
+    
     [HttpPost]
     [SwaggerOperation("AddMember")]
     public async Task<IResult> Add([FromBody] CreateMemberModel model)
@@ -113,7 +135,7 @@ public class MemberController : ControllerBase
         if (member == null)
         {
             this._logger.LogInformation("Member with id: {id} does not exist");
-            return Results.BadRequest();
+            return Results.NotFound();
         }
 
         member.Name = model.Name;
