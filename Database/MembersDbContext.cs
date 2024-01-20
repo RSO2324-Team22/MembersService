@@ -30,10 +30,10 @@ class EnumCollectionJsonValueConverter<T> : ValueConverter<IEnumerable<T>, strin
 where T : struct, Enum
 {
     public EnumCollectionJsonValueConverter() : base(
-        v => JsonSerializer
-            .Serialize(v.Select(e => e.ToString()).ToList(), (JsonSerializerOptions) null),
-        v => JsonSerializer
-            .Deserialize<IEnumerable<string>>(v, (JsonSerializerOptions) null)
+        list => JsonSerializer
+            .Serialize(list.Select(e => e.ToString()).ToList(), (JsonSerializerOptions?) null),
+        list => JsonSerializer
+            .Deserialize<IEnumerable<string>>(list, (JsonSerializerOptions?) null)
             .Select(e => Enum.Parse<T>(e)).ToHashSet()) {}
 }
 

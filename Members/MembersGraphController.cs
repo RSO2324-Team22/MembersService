@@ -19,13 +19,23 @@ public class MembersGraphController : GraphController
     
     [Query]
     public async Task<IEnumerable<Member>> All() {
+        this._logger.LogInformation("Getting all members");
         return await this._dbContext.Members.ToListAsync();
     }
     
     [Query]
     public async Task<Member> Member(int id) {
+        this._logger.LogInformation($"Getting member {id}");
         return await this._dbContext.Members
             .Where(m => m.Id == id)
             .SingleAsync();
+    }
+
+    [Query]
+    public async Task<IEnumerable<Member>> Members(ICollection<int> ids) {
+        this._logger.LogInformation("Getting members {ids}", ids);
+        return await this._dbContext.Members
+            .Where(c => ids.Contains(c.Id))
+            .ToListAsync();
     }
 }

@@ -31,6 +31,7 @@ public class MemberController : ControllerBase
     [SwaggerOperation("GetMembers")]
     public async Task<IEnumerable<Member>> Index()
     {
+        this._logger.LogInformation("Getting all members");
         return await this._dbContext.Members.ToListAsync();
     }
 
@@ -39,6 +40,7 @@ public class MemberController : ControllerBase
     [SwaggerOperation("GetSingerMembers")]
     public async Task<ActionResult<IEnumerable<Member>>> Singers()
     {
+        this._logger.LogInformation("Getting members with Singer role");
         try
         {
             var members = await Index();
@@ -57,6 +59,7 @@ public class MemberController : ControllerBase
     [SwaggerOperation("GetCouncilMembers")]
     public async Task<ActionResult<IEnumerable<Member>>> GetCouncil()
     {
+        this._logger.LogInformation("Getting members with Council role");
         try
         {
             var members = await Index();
@@ -75,27 +78,32 @@ public class MemberController : ControllerBase
     [SwaggerOperation("GetMemberById")]
     public async Task<ActionResult<Member>> GetMemberById(int id)
     {
+        this._logger.LogInformation($"Getting member {id}");
         try
         {   
             Member? member = await this._dbContext.Members
                 .Where(m => m.Id == id)
                 .SingleOrDefaultAsync();
+            
+            if (member is null) {
+                return NotFound();
+            }
+
             this._logger.LogInformation("Returned member with id: {id}", id);
             return Ok(member);
         }
         catch (Exception e)
         {
-            const string errMsg = "There was a problem fetching council members";
-            this._logger.LogError(e, errMsg);
-            return BadRequest(errMsg);
+            this._logger.LogError(e, "There was a problem fetching council members");
+            throw;
         }
     }
 
-    
     [HttpPost]
     [SwaggerOperation("AddMember")]
-    public async Task<IResult> Add([FromBody] CreateMemberModel model)
+    public async Task<ActionResult<Member>> Add([FromBody] CreateMemberModel model)
     {
+        this._logger.LogInformation("Adding member");
         Member member = new Member() {
             Name = model.Name,
             Section = model.Section,
@@ -112,30 +120,33 @@ public class MemberController : ControllerBase
                 Key = "add_member",
                 Value = member.Id
             };
-            await this._kafkaProducer.ProduceAsync("members", addMemberMessage);
-            return Results.Created(nameof(Index), member);
+            this._kafkaProducer.Produce("members", addMemberMessage);
+            this._logger.LogInformation("Added member {id}", member.Id);
+            return CreatedAtAction(nameof(GetMemberById), 
+                                   new { id = member.Id }, member);
         }
         catch (Exception e)
         {
-            const string errMsg = "There was a problem adding new user";
+            const string errMsg = "Error while adding member";
             this._logger.LogError(e, errMsg);
-            return Results.BadRequest(errMsg);
+            return BadRequest(errMsg);
         }
     }
 
     [HttpPut]
     [Route("{id}")]
     [SwaggerOperation("EditMember")]
-    public async Task<IResult> Edit(int id, [FromBody] CreateMemberModel model)
+    public async Task<ActionResult<Member>> Edit(int id, [FromBody] CreateMemberModel model)
     {
+        this._logger.LogInformation("Editing member {id}", id);
         Member? member = await this._dbContext.Members
             .Where(m => m.Id == id)
             .SingleOrDefaultAsync();
 
-        if (member == null)
+        if (member is null)
         {
-            this._logger.LogInformation("Member with id: {id} does not exist");
-            return Results.NotFound();
+            this._logger.LogInformation("Member {id} does not exist", id);
+            return NotFound();
         }
 
         member.Name = model.Name;
@@ -153,28 +164,30 @@ public class MemberController : ControllerBase
                 Key = "edit_member",
                 Value = member.Id
             };
-            await this._kafkaProducer.ProduceAsync("members", editMemberMessage);
-            return Results.Created(nameof(Index), member);
+            this._kafkaProducer.Produce("members", editMemberMessage);
+            this._logger.LogInformation("Updated member {id}", id);
+            return Ok(member);
         }
         catch (Exception e)
         {
             this._logger.LogError(e, "There was an error editing user with id: {id}", id);
-            return Results.BadRequest($"There was an error editing user with id: {id}");
+            throw;
         }
     }
 
     [HttpDelete]
     [Route("{id}")]
     [SwaggerOperation("DeleteMember")]
-    public async Task<IResult> Delete(int id) {
+    public async Task<ActionResult<Member>> Delete(int id) {
+        this._logger.LogInformation("Deleting member {id}", id);
         Member member = await this._dbContext.Members
             .Where(m => m.Id == id)
             .SingleAsync();
 
-        if (member == null)
+        if (member is null)
         {
-            this._logger.LogInformation("Member with given id: {id} does not exist");
-            return Results.BadRequest();
+            this._logger.LogInformation("Member {id} does not exist", id);
+            return NotFound();
         }
 
         try
@@ -186,13 +199,14 @@ public class MemberController : ControllerBase
                 Key = "delete_member",
                 Value = member.Id
             };
-            await this._kafkaProducer.ProduceAsync("members", deleteMemberMessage);
-            return Results.Ok(member);
+            this._kafkaProducer.Produce("members", deleteMemberMessage);
+            this._logger.LogInformation("Deleted member {id}", id);
+            return Ok(member);
         }
         catch(Exception e)
         {
-            this._logger.LogError(e, "There was an error deleting user {id}", id);
-            return Results.BadRequest($"There was an error deleting user {id}");
+            this._logger.LogError(e, "There was an error deleting member {id}", id);
+            throw;
         }
     }
 }
