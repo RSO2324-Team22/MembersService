@@ -27,14 +27,19 @@ public class Program
 
     private static void ConfigureBuilder(WebApplicationBuilder builder)
     {
-        builder.Services.AddControllers();
-        builder.Services.AddHttpContextAccessor();
-
+        ConfigureApplication(builder);
         ConfigureLogging(builder);
         ConfigureKafka(builder);
         ConfigureOpenApi(builder);
         ConfigureDatabase(builder);
         ConfigureMetrics(builder);
+    }
+
+    private static void ConfigureApplication(WebApplicationBuilder builder)
+    {
+        builder.Services.AddGraphQL();
+        builder.Services.AddControllers();
+        builder.Services.AddHttpContextAccessor();
     }
 
     private static void ConfigureLogging(WebApplicationBuilder builder)
@@ -137,7 +142,7 @@ public class Program
         {
             var exceptionHandlerPathFeature = context.Features.Get<IExceptionHandlerPathFeature>();
             var exception = exceptionHandlerPathFeature?.Error;
-            if (exception is null) {
+            if (exception is not null) {
                 context.RequestServices
                     .GetRequiredService<Microsoft.Extensions.Logging.ILogger<Program>>()
                     .LogError(exception, "An error has occurred while processing request");
@@ -145,6 +150,7 @@ public class Program
            
             await context.Response.WriteAsJsonAsync(new { error = "An error has occurred while processing request" });
         }));
+        app.UseGraphQL();
         app.MapControllers();
     }
 
