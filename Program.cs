@@ -28,6 +28,7 @@ public class Program
     private static void ConfigureBuilder(WebApplicationBuilder builder)
     {
         ConfigureApplication(builder);
+        ConfigureHttpClients(builder);
         ConfigureLogging(builder);
         ConfigureKafka(builder);
         ConfigureOpenApi(builder);
@@ -40,6 +41,12 @@ public class Program
         builder.Services.AddGraphQL();
         builder.Services.AddControllers();
         builder.Services.AddHttpContextAccessor();
+    }
+
+    private static void ConfigureHttpClients(WebApplicationBuilder builder) {
+        builder.Services.AddHeaderPropagation(options => {
+            options.Headers.Add("X-Correlation-Id");
+        });
     }
 
     private static void ConfigureLogging(WebApplicationBuilder builder)
