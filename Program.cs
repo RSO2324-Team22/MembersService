@@ -1,6 +1,7 @@
 using Confluent.Kafka;
 using GraphQL.AspNet.Configuration;
 using MembersService.Database;
+using MembersService.Kafka;
 using MembersService.Metrics;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.EntityFrameworkCore;
@@ -86,7 +87,7 @@ public class Program
             .Configure(options => {
                 options.Configure(new ProducerConfig {
                     BootstrapServers = kafkaUrl
-                });
+                }).Serialize(new JsonMessageSerializer<KafkaMessage>());
             });
     }
 

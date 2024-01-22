@@ -1,5 +1,6 @@
 using Confluent.Kafka;
 using MembersService.Database;
+using MembersService.Kafka;
 using MembersService.Metrics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -14,17 +15,20 @@ public class MemberController : ControllerBase
     private readonly ILogger<MemberController> _logger;
     private readonly MembersDbContext _dbContext;
     private readonly MembersMetrics _metrics;
-    private readonly IProducer<string, int> _kafkaProducer;
+    private readonly IProducer<string, KafkaMessage> _kafkaProducer;
+    private readonly HttpContext _httpContext;
 
     public MemberController(
             ILogger<MemberController> logger,
+            IHttpContextAccessor httpContextAccessor,
             MembersDbContext dbContext,
             MembersMetrics metrics,
-            IProducer<string, int> kafkaProducer) {
+            IProducer<string, KafkaMessage> kafkaProducer) {
         this._logger = logger;
         this._dbContext = dbContext;
         this._metrics = metrics;
         this._kafkaProducer = kafkaProducer;
+        this._httpContext = httpContextAccessor.HttpContext!;
     }
 
     [HttpGet]
@@ -116,9 +120,13 @@ public class MemberController : ControllerBase
         {
             this._dbContext.Members.Add(member);
             await this._dbContext.SaveChangesAsync();
-            Message<string, int> addMemberMessage = new Message<string, int>() {
+            Message<string, KafkaMessage> addMemberMessage = new Message<string, KafkaMessage>()
+            {
                 Key = "add_member",
-                Value = member.Id
+                Value = new KafkaMessage {
+                    EntityId = member.Id,
+                    CorrelationId = this._httpContext.Request.Headers["X-Correlation-Id"]!
+                }
             };
             this._kafkaProducer.Produce("members", addMemberMessage);
             this._logger.LogInformation("Added member {id}", member.Id);
@@ -160,9 +168,13 @@ public class MemberController : ControllerBase
             
             this._logger.LogInformation(221, "Edited user {id}", id);
             
-            Message<string, int> editMemberMessage = new Message<string, int>() {
-                Key = "edit_member",
-                Value = member.Id
+            Message<string, KafkaMessage> editMemberMessage = new Message<string, KafkaMessage>()
+            {
+                Key = "delete_member",
+                Value = new KafkaMessage {
+                    EntityId = member.Id,
+                    CorrelationId = this._httpContext.Request.Headers["X-Correlation-Id"]!
+                }
             };
             this._kafkaProducer.Produce("members", editMemberMessage);
             this._logger.LogInformation("Updated member {id}", id);
@@ -194,10 +206,13 @@ public class MemberController : ControllerBase
         {
             this._dbContext.Remove(member);
             await this._dbContext.SaveChangesAsync();
-            Message<string, int> deleteMemberMessage = new Message<string, int>()
+            Message<string, KafkaMessage> deleteMemberMessage = new Message<string, KafkaMessage>()
             {
                 Key = "delete_member",
-                Value = member.Id
+                Value = new KafkaMessage {
+                    EntityId = member.Id,
+                    CorrelationId = this._httpContext.Request.Headers["X-Correlation-Id"]!
+                }
             };
             this._kafkaProducer.Produce("members", deleteMemberMessage);
             this._logger.LogInformation("Deleted member {id}", id);
