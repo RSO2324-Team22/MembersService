@@ -170,7 +170,7 @@ public class MemberController : ControllerBase
             
             Message<string, KafkaMessage> editMemberMessage = new Message<string, KafkaMessage>()
             {
-                Key = "delete_member",
+                Key = "edit_member",
                 Value = new KafkaMessage {
                     EntityId = member.Id,
                     CorrelationId = this._httpContext.Request.Headers["X-Correlation-Id"]!
