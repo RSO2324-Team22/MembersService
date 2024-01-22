@@ -2,7 +2,6 @@ using Confluent.Kafka;
 using GraphQL.AspNet.Configuration;
 using MembersService.Database;
 using MembersService.Kafka;
-using MembersService.Metrics;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using OpenTelemetry.Metrics;

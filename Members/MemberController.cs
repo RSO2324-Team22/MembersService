@@ -1,7 +1,6 @@
 using Confluent.Kafka;
 using MembersService.Database;
 using MembersService.Kafka;
-using MembersService.Metrics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Swashbuckle.AspNetCore.Annotations;
