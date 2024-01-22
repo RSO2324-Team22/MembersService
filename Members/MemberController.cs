@@ -14,7 +14,6 @@ public class MemberController : ControllerBase
 {
     private readonly ILogger<MemberController> _logger;
     private readonly MembersDbContext _dbContext;
-    private readonly MembersMetrics _metrics;
     private readonly IProducer<string, KafkaMessage> _kafkaProducer;
     private readonly HttpContext _httpContext;
 
@@ -22,11 +21,9 @@ public class MemberController : ControllerBase
             ILogger<MemberController> logger,
             IHttpContextAccessor httpContextAccessor,
             MembersDbContext dbContext,
-            MembersMetrics metrics,
             IProducer<string, KafkaMessage> kafkaProducer) {
         this._logger = logger;
         this._dbContext = dbContext;
-        this._metrics = metrics;
         this._kafkaProducer = kafkaProducer;
         this._httpContext = httpContextAccessor.HttpContext!;
     }
