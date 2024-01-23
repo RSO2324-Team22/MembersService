@@ -5,13 +5,13 @@ using GraphQL.AspNet.Attributes;
 
 namespace MembersService.Members;
 
-public class MembersGraphController : GraphController
+public class MemberGraphController : GraphController
 {
-    private readonly ILogger<MembersGraphController> _logger;
+    private readonly ILogger<MemberGraphController> _logger;
     private readonly MembersDbContext _dbContext;
 
-    public MembersGraphController(
-            ILogger<MembersGraphController> logger,
+    public MemberGraphController(
+            ILogger<MemberGraphController> logger,
             MembersDbContext dbContext) {
         this._logger = logger;
         this._dbContext = dbContext;
